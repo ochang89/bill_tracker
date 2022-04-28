@@ -12,6 +12,8 @@ import datetime
     Future features:
         - checkboxes that will pertain to weekly, bi-weekly, annual costs (already have monthly)
             - checking one of these boxes will trigger a field to pop up with the respective field from above
+        - hot keys: use DEL key to delete directly from tree view.
+                    Add (alt + A), Delete (alt + D), Clear (alt + C) hot keys
 '''
 
 root = Tk()
@@ -25,8 +27,8 @@ root.geometry('500x500')
 db = {}
 total_sum = []
 global t
+count = 0
 t = 0.0
-
 
 def open_file():
     count = len(db)
@@ -65,18 +67,25 @@ def add_bill_func():
     add_bill_func() grabs entries from input fields, adds them to db, and adds user typed bill/cost to columns in treeview display.
     Attached to add_btn.
     '''
-    b = 0
-    ms = 0
+    
+    
     # conn = sqlite3.connect('bill_tracker.db')
     # c = conn.cursor()
     global bill_desc
     global bill_add_cost
+    global count
     global t
+
     
-    count = 0
+    b = 0
+    ms = 0
+    
     bill_desc = bill.get()
     bill_add_cost = float(add_cost.get())
+    
     db[count] = (bill_desc, bill_add_cost)
+    count+=1
+    print(db)
 
     t = t+bill_add_cost
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
@@ -84,14 +93,15 @@ def add_bill_func():
     if bill_desc == '' or bill_add_cost == '':
         ms = 1
     if isinstance(bill_add_cost, float) == False:
-        bill.delete(0, END)
-        add_cost.delete(0, END)
         ms = 2
-    if isinstance(bill_add_cost, str) == True:
         bill.delete(0, END)
         add_cost.delete(0, END)
+    if isinstance(bill_add_cost, str) == True:
         ms = 3
         b = 1
+        bill.delete(0, END)
+        add_cost.delete(0, END)
+        
     # each number in 'ms' represents a different warning, as seen below.
     if ms == 1:
         messagebox.showwarning('Warning', "Can't leave field blank")
@@ -108,7 +118,6 @@ def add_bill_func():
         # if b == 1, warning is triggered above. if b == 0 if warning is not triggered, continue with program
         if b == 0:
             tree.insert(parent='',index=0, text=f'{bill_desc}',values=(bill_desc, format(f"{bill_add_cost:.2f}")))
-            
             # lbox.insert(0, [bill_desc, bill_add_cost])
             # Entry.delete() must be put before database conn.commit() and conn.close() to work
             bill.delete(0, END)
@@ -133,7 +142,6 @@ def delete_bill_func():
 
     selected = tree.selection()
     tree.delete(selected)
-    
     
     # conn = sqlite3.connect('bill_tracker.db')
     # c = conn.cursor()
@@ -192,6 +200,9 @@ def save_file():
     writer.save()
 
 def disable_btn():
+    '''
+        Tool to disable features
+    '''
     file_menu.entryconfig("Open File", state="disabled")
 
 '''

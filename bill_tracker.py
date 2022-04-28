@@ -1,4 +1,5 @@
 from re import T
+from sqlite3 import dbapi2
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter import filedialog as fd
@@ -25,13 +26,12 @@ root.title("Handy Bill Handler")
 root.geometry('500x500')
 
 db = {}
-total_sum = []
-global t
+item_costs = []
 count = 0
 t = 0.0
 
 def open_file():
-    count = len(db)
+    global db
     global bill_desc
     global bill_add_cost
     bill_desc = bill.get()
@@ -68,15 +68,14 @@ def add_bill_func():
     Attached to add_btn.
     '''
     
-    
     # conn = sqlite3.connect('bill_tracker.db')
     # c = conn.cursor()
     global bill_desc
     global bill_add_cost
     global count
     global t
+    global db
 
-    
     b = 0
     ms = 0
     
@@ -85,8 +84,6 @@ def add_bill_func():
     
     db[count] = (bill_desc, bill_add_cost)
     count+=1
-    print(db)
-
     t = t+bill_add_cost
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
 
@@ -118,8 +115,10 @@ def add_bill_func():
         # if b == 1, warning is triggered above. if b == 0 if warning is not triggered, continue with program
         if b == 0:
             tree.insert(parent='',index=0, text=f'{bill_desc}',values=(bill_desc, format(f"{bill_add_cost:.2f}")))
+            
             # lbox.insert(0, [bill_desc, bill_add_cost])
             # Entry.delete() must be put before database conn.commit() and conn.close() to work
+
             bill.delete(0, END)
             add_cost.delete(0, END)
             # add bill_name and cost to sqlite db
@@ -133,15 +132,28 @@ def add_bill_func():
             # conn.commit()
             # conn.close()
             # clear field after pressing add bill button
-    return t
+    
 
 def delete_bill_func():
     '''
         Delete function attached to delete_btn. Deletes selected item from treeview.
     '''
+    global t
+    global db
 
     selected = tree.selection()
+    item = tree.item(selected)
+    record = item['values']
+    for k, v in list(db.items()):
+        if record[0] in v:
+            del db[k]
+
+    t = t - float(record[1])
+    # print(f"Deleted bill: {record[0]} - ${record[1]}")
     tree.delete(selected)
+
+    # update label
+    total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
     
     # conn = sqlite3.connect('bill_tracker.db')
     # c = conn.cursor()
@@ -173,8 +185,14 @@ def delete_bill_func():
 #     conn.close()
 
 def clear_all():
-    for item in tree.get_children():
-        tree.delete(item)
+    for i in tree.get_children():
+        tree.delete(i)
+        item = tree.item(i)
+        record = item['values']
+        t = t - float(record[1])
+        # print(f"Deleted bill: {record[0]} - ${record[1]}")
+
+    total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
 
 def tree_view():
     '''
@@ -235,7 +253,7 @@ add_cost_label.place(relx=.05, rely=.2)
 add_cost = Entry(root, bd=1)
 add_cost.place(relx=.22, rely=.2)
 
-vlabel = Label(root, text="v1.0", font=('Arial', 8))
+vlabel = Label(root, text="v1.3", font=('Arial', 8))
 vlabel.place(relx=.01,rely=.96)
 
 # add add button

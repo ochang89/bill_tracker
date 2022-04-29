@@ -3,6 +3,10 @@ from sqlite3 import dbapi2
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter import filedialog as fd
+from tkinter.font import Font
+from tkinter import font
+from ttkthemes import ThemedTk
+from PIL import ImageTk, Image
 import sqlite3
 import pandas as pd
 import os
@@ -17,13 +21,22 @@ import datetime
                     Add (alt + A), Delete (alt + D), Clear (alt + C) hot keys
 '''
 
-root = Tk()
+root = ThemedTk()
 tree = ttk.Treeview(root, show='headings')
+frame = ttk.Frame(root, width=20, height=20)
+# root.tk.call('source','azure.tcl')
+style = ttk.Style()
+style.theme_use('equilux')
 
-# frame = ttk.Frame(root, padding=10)
 # frame.grid()
 root.title("Handy Bill Handler")
 root.geometry('500x500')
+root.configure(bg='#303330')
+
+
+img = Image.open('logo.png')
+resize_img = img.resize((90,90), Image.ANTIALIAS)
+img = ImageTk.PhotoImage(resize_img)
 
 db = {}
 item_costs = []
@@ -151,7 +164,6 @@ def delete_bill_func():
     t = t - float(record[1])
     # print(f"Deleted bill: {record[0]} - ${record[1]}")
     tree.delete(selected)
-
     # update label
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
     
@@ -205,6 +217,8 @@ def tree_view():
     tree.heading('Bill Name', text='Bill Name', anchor=CENTER)
     tree.heading('Cost', text='Cost', anchor=CENTER)
     tree.place(relx=.3,rely=.40)
+    style.configure("Treeview",background='#3b403b', fieldbackground='#3b403b', fg='#ffffff')
+    style.map('Treeview', background=[('selected', '#303330')])
 
 def save_file():
     '''
@@ -231,7 +245,6 @@ tree_view()
 
 m = Menu(root)
 root.config(menu=m)
-
 file_menu = Menu(m, tearoff=False)
 m.add_cascade(label="File", menu=file_menu)
 file_menu.add_command(label="Open File", command=disable_btn)
@@ -240,36 +253,46 @@ file_menu.add_command(label="Save File As", command=save_file)
 # lbox = Listbox(root, width = 35, selectmode=BROWSE, relief=SUNKEN)
 # lbox.place(relx=.52,rely=.05)
 
-total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}')
+my_font = Font(family='Noto Sans', size=11, weight='bold')
+label_font = Font(family='Noto Sans', size=10, weight='bold')
+
+logo_label = Label(root,image=img, bg='#303330', font = label_font)
+logo_label.place(x=20,y=12)
+
+total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}', bg='#303330', font = label_font, fg='#ffffff')
 total_label.place(relx=.68,rely=.88)
 
-bill_label = Label(root, text="Bill Name:")
-bill_label.place(relx=.05, rely=.15)
-bill = Entry(root, bd=1)
-bill.place(relx=.22, rely=.15)
+bill_label = Label(root, text="BILL NAME", bg='#303330', font = label_font, fg='#ffffff')
+bill_label.place(relx=.05, rely=.25)
+bill = Entry(root, bd=0)
+bill.place(relx=.30, rely=.25,height=25)
+bill.configure(bg='#3b403b')
 
-add_cost_label = Label(root, text="Monthly Cost:")
-add_cost_label.place(relx=.05, rely=.2)
-add_cost = Entry(root, bd=1)
-add_cost.place(relx=.22, rely=.2)
+add_cost_label = Label(root, text="MONTHLY COST", bg='#303330', font = label_font, fg='#ffffff')
+add_cost_label.place(relx=.05, rely=.30)
+add_cost = Entry(root, bd=0)
+add_cost.place(relx=.30, rely=.30,height=25)
+add_cost.configure(bg='#3b403b')
 
-vlabel = Label(root, text="v1.3", font=('Arial', 8))
+vlabel = Label(root, text="v1.5", font=Font(family='Noto Sans', size=8), bg='#303330', fg='#ffffff')
 vlabel.place(relx=.01,rely=.96)
 
 # add add button
-add_btn = Button(root, padx=15, pady=6, text='  Add  ', bd=.5, bg='#e8e8e8', activebackground='#f0efed', command=add_bill_func)
-add_btn.place(relx=.08,rely=.60)
+add_btn = Button(root, padx=35, pady=6, text='   ADD  ', font = my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=add_bill_func)
+add_btn.place(relx=.02,rely=.49)
 
 # add delete button
-delete_btn = Button(root, padx=13, pady=6, text=' Delete ', bd=.5, bg='#e8e8e8', activebackground='#f0efed', command=delete_bill_func)
-delete_btn.place(relx=.08,rely=.70)
+delete_btn = Button(root, padx=35, pady=6, text='DELETE', font=my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=delete_bill_func)
+delete_btn.place(relx=.02,rely=.59)
 
 # add clear all button
-clear_btn = Button(root, padx=16, pady=6, text=' Clear ', bd=.5, bg='#e8e8e8', activebackground='#f0efed', command=clear_all)
-clear_btn.place(relx=.08,rely=.80)
+clear_btn = Button(root, padx=35, pady=6, text=' CLEAR ', font=my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=clear_all)
+clear_btn.place(relx=.02,rely=.69)
 
 # connect to db, creates bill_tracker.db if it doesn't exist
 # table_exists()
+
+# print(font.families())
 
 root.resizable(width=False, height=False)
 root.mainloop()

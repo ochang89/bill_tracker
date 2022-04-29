@@ -21,21 +21,24 @@ import datetime
                     Add (alt + A), Delete (alt + D), Clear (alt + C) hot keys
 '''
 
+# instantiate tkinter window and theme
 root = ThemedTk()
 tree = ttk.Treeview(root, show='headings')
 frame = ttk.Frame(root, width=20, height=20)
 style = ttk.Style()
 style.theme_use('equilux')
 
+# convert .png image into a .ico image for icon use
 ico = Image.open('logo.png')
 photo = ImageTk.PhotoImage(ico)
 root.wm_iconphoto(False, photo)
 
-# frame.grid()
+
 root.title("Handy Bill Handler")
 root.geometry('500x350')
 root.configure(bg='#303330')
 
+# this logo has been disabled in app
 img = Image.open('logo.png')
 resize_img = img.resize((50,50), Image.ANTIALIAS)
 img = ImageTk.PhotoImage(resize_img)
@@ -187,12 +190,15 @@ def delete_bill_func():
 def clear_all():
     for i in tree.get_children():
         tree.delete(i)
-        item = tree.item(i)
-        record = item['values']
-        t = t - float(record[1])
+        # item = tree.item(i)
+        # record = item['values']
+        # t = t - float(record[1])
         # print(f"Deleted bill: {record[0]} - ${record[1]}")
+    for i in list(db.keys()):
+        db.pop(i)
 
-    total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
+    # line below connects to db directly, and shows the databases' values are cleared
+    total_label.config(text=f'Total: ${format(f"{sum(list(db)):.2f}")}')
 
 def tree_view():
     '''

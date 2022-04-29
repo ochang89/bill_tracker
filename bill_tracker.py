@@ -27,6 +27,10 @@ frame = ttk.Frame(root, width=20, height=20)
 style = ttk.Style()
 style.theme_use('equilux')
 
+ico = Image.open('logo.png')
+photo = ImageTk.PhotoImage(ico)
+root.wm_iconphoto(False, photo)
+
 # frame.grid()
 root.title("Handy Bill Handler")
 root.geometry('500x350')
@@ -251,14 +255,14 @@ total_label.place(relx=.75,rely=.89)
 bill_label = Label(root, text="BILL NAME", bg='#303330', font = label_font, fg='#ffffff')
 bill_label.place(relx=.020, rely=.10)
 bill = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
-bill.place(relx=.02, rely=.16,height=28)
+bill.place(relx=.02, rely=.17,height=28)
 bill.configure(bg='#484f48')
 
 
 add_cost_label = Label(root, text="MONTHLY COST", bg='#303330', font = label_font, fg='#ffffff')
 add_cost_label.place(relx=.02, rely=.27)
 add_cost = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
-add_cost.place(relx=.02, rely=.33,height=28)
+add_cost.place(relx=.02, rely=.34,height=28)
 add_cost.configure(bg='#484f48')
 
 vlabel = Label(root, text="v1.6", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')

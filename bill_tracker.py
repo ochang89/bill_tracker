@@ -252,14 +252,14 @@ bill_label = Label(root, text="BILL NAME", bg='#303330', font = label_font, fg='
 bill_label.place(relx=.020, rely=.10)
 bill = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
 bill.place(relx=.02, rely=.16,height=28)
-bill.configure(bg='#3b403b')
+bill.configure(bg='#484f48')
 
 
 add_cost_label = Label(root, text="MONTHLY COST", bg='#303330', font = label_font, fg='#ffffff')
 add_cost_label.place(relx=.02, rely=.27)
 add_cost = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
 add_cost.place(relx=.02, rely=.33,height=28)
-add_cost.configure(bg='#3b403b')
+add_cost.configure(bg='#484f48')
 
 vlabel = Label(root, text="v1.6", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
 vlabel.place(relx=.01,rely=.94)

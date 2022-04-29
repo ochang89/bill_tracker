@@ -24,19 +24,19 @@ import datetime
 root = ThemedTk()
 tree = ttk.Treeview(root, show='headings')
 frame = ttk.Frame(root, width=20, height=20)
-# root.tk.call('source','azure.tcl')
 style = ttk.Style()
 style.theme_use('equilux')
 
 # frame.grid()
 root.title("Handy Bill Handler")
-root.geometry('500x500')
+root.geometry('500x350')
 root.configure(bg='#303330')
 
-
 img = Image.open('logo.png')
-resize_img = img.resize((90,90), Image.ANTIALIAS)
+resize_img = img.resize((50,50), Image.ANTIALIAS)
 img = ImageTk.PhotoImage(resize_img)
+
+var = StringVar()
 
 db = {}
 item_costs = []
@@ -80,7 +80,6 @@ def add_bill_func():
     add_bill_func() grabs entries from input fields, adds them to db, and adds user typed bill/cost to columns in treeview display.
     Attached to add_btn.
     '''
-    
     # conn = sqlite3.connect('bill_tracker.db')
     # c = conn.cursor()
     global bill_desc
@@ -88,9 +87,7 @@ def add_bill_func():
     global count
     global t
     global db
-
     b = 0
-    ms = 0
     
     bill_desc = bill.get()
     bill_add_cost = float(add_cost.get())
@@ -101,26 +98,14 @@ def add_bill_func():
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
 
     if bill_desc == '' or bill_add_cost == '':
-        ms = 1
-    if isinstance(bill_add_cost, float) == False:
-        ms = 2
-        bill.delete(0, END)
-        add_cost.delete(0, END)
-    if isinstance(bill_add_cost, str) == True:
-        ms = 3
-        b = 1
-        bill.delete(0, END)
-        add_cost.delete(0, END)
-        
-    # each number in 'ms' represents a different warning, as seen below.
-    if ms == 1:
         messagebox.showwarning('Warning', "Can't leave field blank")
-    if ms == 2:
-        messagebox.showwarning('Warning', "Cannot use numbers in Bill Name field")
+    elif isinstance(bill_add_cost, float) == False:
+        messagebox.showwarning('Warning', "Cannot use letters in Monthly Cost field")
         bill.delete(0, END)
         add_cost.delete(0, END)
-    if ms == 3:
-        messagebox.showwarning('Warning', "Cannot use text in Monthly Cost field")
+    elif isinstance(bill_desc, str) == False:
+        b = 1
+        messagebox.showwarning('Warning', "Cannot use numbers in Bill Name field")
         bill.delete(0, END)
         add_cost.delete(0, END)
     else:
@@ -145,7 +130,6 @@ def add_bill_func():
             # conn.commit()
             # conn.close()
             # clear field after pressing add bill button
-    
 
 def delete_bill_func():
     '''
@@ -211,12 +195,12 @@ def tree_view():
         Generates tree_view box and columns that lists
     '''
     tree['columns']=('Bill Name','Cost')
-    tree.column("Bill Name", anchor=CENTER, width=175, stretch=False)
-    tree.column("Cost", anchor=CENTER, width=129, stretch=False)
+    tree.column("Bill Name", anchor=CENTER, width=193, stretch=False)
+    tree.column("Cost", anchor=CENTER, width=143, stretch=False)
 
     tree.heading('Bill Name', text='Bill Name', anchor=CENTER)
     tree.heading('Cost', text='Cost', anchor=CENTER)
-    tree.place(relx=.3,rely=.40)
+    tree.place(relx=.3,rely=.22)
     style.configure("Treeview",background='#3b403b', fieldbackground='#3b403b', fg='#ffffff')
     style.map('Treeview', background=[('selected', '#303330')])
 
@@ -256,38 +240,41 @@ file_menu.add_command(label="Save File As", command=save_file)
 my_font = Font(family='Noto Sans', size=11, weight='bold')
 label_font = Font(family='Noto Sans', size=10, weight='bold')
 
-logo_label = Label(root,image=img, bg='#303330', font = label_font)
-logo_label.place(x=20,y=12)
+# ** Uncomment enable logo **
+# logo_label = Label(root,image=img, bg='#303330', font = label_font)
+# logo_label.place(x=17,y=15)
 
 total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}', bg='#303330', font = label_font, fg='#ffffff')
-total_label.place(relx=.68,rely=.88)
+total_label.place(relx=.75,rely=.89)
+
 
 bill_label = Label(root, text="BILL NAME", bg='#303330', font = label_font, fg='#ffffff')
-bill_label.place(relx=.05, rely=.25)
-bill = Entry(root, bd=0)
-bill.place(relx=.30, rely=.25,height=25)
+bill_label.place(relx=.020, rely=.10)
+bill = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
+bill.place(relx=.02, rely=.16,height=28)
 bill.configure(bg='#3b403b')
 
+
 add_cost_label = Label(root, text="MONTHLY COST", bg='#303330', font = label_font, fg='#ffffff')
-add_cost_label.place(relx=.05, rely=.30)
-add_cost = Entry(root, bd=0)
-add_cost.place(relx=.30, rely=.30,height=25)
+add_cost_label.place(relx=.02, rely=.27)
+add_cost = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
+add_cost.place(relx=.02, rely=.33,height=28)
 add_cost.configure(bg='#3b403b')
 
-vlabel = Label(root, text="v1.5", font=Font(family='Noto Sans', size=8), bg='#303330', fg='#ffffff')
-vlabel.place(relx=.01,rely=.96)
+vlabel = Label(root, text="v1.6", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
+vlabel.place(relx=.01,rely=.94)
 
 # add add button
-add_btn = Button(root, padx=35, pady=6, text='   ADD  ', font = my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=add_bill_func)
-add_btn.place(relx=.02,rely=.49)
+add_btn = Button(root, padx=36, pady=6, text='   ADD  ', font = my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=add_bill_func)
+add_btn.place(relx=.015,rely=.47)
 
 # add delete button
-delete_btn = Button(root, padx=35, pady=6, text='DELETE', font=my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=delete_bill_func)
-delete_btn.place(relx=.02,rely=.59)
+delete_btn = Button(root, padx=36, pady=6, text='DELETE', font=my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=delete_bill_func)
+delete_btn.place(relx=.015,rely=.62)
 
 # add clear all button
 clear_btn = Button(root, padx=35, pady=6, text=' CLEAR ', font=my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=clear_all)
-clear_btn.place(relx=.02,rely=.69)
+clear_btn.place(relx=.015,rely=.77)
 
 # connect to db, creates bill_tracker.db if it doesn't exist
 # table_exists()

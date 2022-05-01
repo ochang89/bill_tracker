@@ -37,7 +37,6 @@ ico = Image.open('logo.png')
 photo = ImageTk.PhotoImage(ico)
 root.wm_iconphoto(False, photo)
 
-
 root.title("Handy Bill Handler")
 root.geometry('500x350')
 root.configure(bg='#303330')
@@ -55,6 +54,10 @@ count = 0
 t = 0.0
 
 def open_file():
+    '''
+        Reads and inputs .xslx file contents into the program's treeview in appropriate columns.
+    '''
+
     global db
     global bill_desc
     global bill_add_cost
@@ -91,6 +94,7 @@ def add_bill_func():
     add_bill_func() grabs entries from input fields, adds them to db, and adds user typed bill/cost to columns in treeview display.
     Attached to add_btn.
     '''
+    
     # conn = sqlite3.connect('bill_tracker.db')
     # c = conn.cursor()
     global bill_desc
@@ -273,7 +277,7 @@ add_cost = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9)
 add_cost.place(relx=.02, rely=.34,height=28)
 add_cost.configure(bg='#484f48')
 
-vlabel = Label(root, text="v1.6", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
+vlabel = Label(root, text="v1.7", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
 vlabel.place(relx=.01,rely=.94)
 
 # add add button

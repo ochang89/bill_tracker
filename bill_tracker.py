@@ -19,6 +19,10 @@ import datetime
             - checking one of these boxes will trigger a field to pop up with the respective field from above
         - hot keys: use DEL key to delete directly from tree view.
                     Add (alt + A), Delete (alt + D), Clear (alt + C) hot keys
+
+    Current fixes:
+        - File menu 'open' function
+        - Output total to xlsx list
 '''
 
 # instantiate tkinter window and theme
@@ -39,9 +43,9 @@ root.geometry('500x350')
 root.configure(bg='#303330')
 
 # this logo has been disabled in app
-img = Image.open('logo.png')
-resize_img = img.resize((50,50), Image.ANTIALIAS)
-img = ImageTk.PhotoImage(resize_img)
+# img = Image.open('logo.png')
+# resize_img = img.resize((50,50), Image.ANTIALIAS)
+# img = ImageTk.PhotoImage(resize_img)
 
 var = StringVar()
 
@@ -54,25 +58,25 @@ def open_file():
     global db
     global bill_desc
     global bill_add_cost
-    bill_desc = bill.get()
-    bill_add_cost = float(add_cost.get())
-    db[count] = (bill_desc, bill_add_cost)
+    # bill_desc = bill.get()
+    # bill_add_cost = float(add_cost.get())
+    # db[count] = (bill_desc, bill_add_cost)
     file = fd.askopenfilename(title='Select A File')
     clear_all()
-    rf = pd.read_excel(file)
+    rf = pd.read_excel(file, usecols= "B:C")
 
     # drops null value columns (null = 'NaN' values)
     nan_val = float("NaN")                              # define NaN value to search for
     rf.replace('', nan_val, inplace=True)
     rf.dropna(how='all',axis='columns', inplace=True)   # dropna(how= 'any or 'all' where it has at least one NA, axis= 'columns',0 or 'index',1 Drop columns or rows, inplace=True)
+    
 
     tree["column"] = list(rf.columns)
     tree["show"] = "headings"
-
+    print(tree["column"])
     # For Headings iterate over the columns
-    for col in tree["column"]:
-        if col in tree['displaycolumns']:
-            tree.heading(col, text=col)
+    for col in tree["columns"]:
+        tree.heading(col, text=col)
 
    # Put Data in Rows
     rf_rows = rf.to_numpy().tolist()
@@ -241,7 +245,7 @@ m = Menu(root)
 root.config(menu=m)
 file_menu = Menu(m, tearoff=False)
 m.add_cascade(label="File", menu=file_menu)
-file_menu.add_command(label="Open File", command=disable_btn)
+file_menu.add_command(label="Open File", command=open_file)
 file_menu.add_command(label="Save File As", command=save_file)
 
 # lbox = Listbox(root, width = 35, selectmode=BROWSE, relief=SUNKEN)
@@ -257,13 +261,11 @@ label_font = Font(family='Noto Sans', size=10, weight='bold')
 total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}', bg='#303330', font = label_font, fg='#ffffff')
 total_label.place(relx=.75,rely=.89)
 
-
 bill_label = Label(root, text="BILL NAME", bg='#303330', font = label_font, fg='#ffffff')
 bill_label.place(relx=.020, rely=.10)
 bill = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
 bill.place(relx=.02, rely=.17,height=28)
 bill.configure(bg='#484f48')
-
 
 add_cost_label = Label(root, text="MONTHLY COST", bg='#303330', font = label_font, fg='#ffffff')
 add_cost_label.place(relx=.02, rely=.27)

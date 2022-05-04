@@ -1,5 +1,3 @@
-from re import T
-from sqlite3 import dbapi2
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter import filedialog as fd
@@ -41,11 +39,6 @@ root.title("Handy Bill Handler")
 root.geometry('500x350')
 root.configure(bg='#303330')
 
-# this logo has been disabled in app
-# img = Image.open('logo.png')
-# resize_img = img.resize((50,50), Image.ANTIALIAS)
-# img = ImageTk.PhotoImage(resize_img)
-
 var = StringVar()
 
 db = {}
@@ -61,9 +54,6 @@ def open_file():
     global db
     global bill_desc
     global bill_add_cost
-    # bill_desc = bill.get()
-    # bill_add_cost = float(add_cost.get())
-    # db[count] = (bill_desc, bill_add_cost)
     file = fd.askopenfilename(title='Select A File')
     clear_all()
     rf = pd.read_excel(file, usecols= "B:C")
@@ -73,7 +63,7 @@ def open_file():
     rf.replace('', nan_val, inplace=True)
     rf.dropna(how='all',axis='columns', inplace=True)   # dropna(how= 'any or 'all' where it has at least one NA, axis= 'columns',0 or 'index',1 Drop columns or rows, inplace=True)
     
-
+    # iterates through columns and displays the column names onto the treeview
     tree["column"] = list(rf.columns)
     tree["show"] = "headings"
     print(tree["column"])
@@ -81,7 +71,7 @@ def open_file():
     for col in tree["columns"]:
         tree.heading(col, text=col)
 
-   # Put Data in Rows
+   # Put data in rows in treeview
     rf_rows = rf.to_numpy().tolist()
     for row in rf_rows:
         tree.insert("", "end", values=row)
@@ -89,12 +79,29 @@ def open_file():
     
     tree_view()
 
+def save_file():
+    '''
+        Prompts user with save file dialog when save_btn is clicked. Writes/outputs dataframe gathered from db to xlsx file.
+        
+    '''
+    f = fd.asksaveasfilename()
+    df = pd.DataFrame.from_dict(db,orient='index')
+
+    # output validation so that file extension isn't added every file save (when replacing file)
+    if '.xlsx' in f:
+        writer = pd.ExcelWriter(f)
+    else:
+        writer = pd.ExcelWriter(f'{f}.xlsx')
+        
+    df.to_excel(writer,sheet_name=f'{datetime.date.today()}')
+    writer.save()
+
 def add_bill_func():
     ''' 
     add_bill_func() grabs entries from input fields, adds them to db, and adds user typed bill/cost to columns in treeview display.
     Attached to add_btn.
     '''
-    
+
     # conn = sqlite3.connect('bill_tracker.db')
     # c = conn.cursor()
     global bill_desc
@@ -161,7 +168,6 @@ def delete_bill_func():
             del db[k]
 
     t = t - float(record[1])
-    # print(f"Deleted bill: {record[0]} - ${record[1]}")
     tree.delete(selected)
     # update label
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
@@ -222,16 +228,7 @@ def tree_view():
     style.configure("Treeview",background='#3b403b', fieldbackground='#3b403b', fg='#ffffff')
     style.map('Treeview', background=[('selected', '#303330')])
 
-def save_file():
-    '''
-        Prompts user with save file dialog when save_btn is clicked. Writes/outputs dataframe gathered from db to xlsx file.
-        
-    '''
-    f = fd.asksaveasfilename()
-    df = pd.DataFrame.from_dict(db,orient='index')
-    writer = pd.ExcelWriter(f'{f}.xlsx')
-    df.to_excel(writer,sheet_name=f'{datetime.date.today()}')
-    writer.save()
+
 
 def disable_btn():
     '''
@@ -252,15 +249,10 @@ m.add_cascade(label="File", menu=file_menu)
 file_menu.add_command(label="Open File", command=open_file)
 file_menu.add_command(label="Save File As", command=save_file)
 
-# lbox = Listbox(root, width = 35, selectmode=BROWSE, relief=SUNKEN)
-# lbox.place(relx=.52,rely=.05)
 
 my_font = Font(family='Noto Sans', size=11, weight='bold')
 label_font = Font(family='Noto Sans', size=10, weight='bold')
 
-# ** Uncomment enable logo **
-# logo_label = Label(root,image=img, bg='#303330', font = label_font)
-# logo_label.place(x=17,y=15)
 
 total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}', bg='#303330', font = label_font, fg='#ffffff')
 total_label.place(relx=.75,rely=.89)

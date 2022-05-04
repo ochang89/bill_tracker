@@ -1,5 +1,6 @@
 dist/
 build/
 __pycache__/
-bill_tracker.db
 bill_tracker.spec
+db_code.py
+test.py

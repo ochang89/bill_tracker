@@ -5,9 +5,7 @@ from tkinter.font import Font
 from tkinter import font
 from ttkthemes import ThemedTk
 from PIL import ImageTk, Image
-import sqlite3
 import pandas as pd
-import os
 import numpy
 import datetime
 
@@ -22,6 +20,11 @@ import datetime
         - File menu 'open' function
         - Output total to xlsx list
 '''
+db = {}
+item_costs = []
+count = 0
+t = 0.0
+
 
 # instantiate tkinter window and theme
 root = ThemedTk()
@@ -40,11 +43,6 @@ root.geometry('500x350')
 root.configure(bg='#303330')
 
 var = StringVar()
-
-db = {}
-item_costs = []
-count = 0
-t = 0.0
 
 def open_file():
     '''
@@ -67,6 +65,7 @@ def open_file():
     tree["column"] = list(rf.columns)
     tree["show"] = "headings"
     print(tree["column"])
+
     # For Headings iterate over the columns
     for col in tree["columns"]:
         tree.heading(col, text=col)
@@ -82,7 +81,6 @@ def open_file():
 def save_file():
     '''
         Prompts user with save file dialog when save_btn is clicked. Writes/outputs dataframe gathered from db to xlsx file.
-        
     '''
     f = fd.asksaveasfilename()
     df = pd.DataFrame.from_dict(db,orient='index')
@@ -92,7 +90,7 @@ def save_file():
         writer = pd.ExcelWriter(f)
     else:
         writer = pd.ExcelWriter(f'{f}.xlsx')
-        
+
     df.to_excel(writer,sheet_name=f'{datetime.date.today()}')
     writer.save()
 
@@ -101,9 +99,6 @@ def add_bill_func():
     add_bill_func() grabs entries from input fields, adds them to db, and adds user typed bill/cost to columns in treeview display.
     Attached to add_btn.
     '''
-
-    # conn = sqlite3.connect('bill_tracker.db')
-    # c = conn.cursor()
     global bill_desc
     global bill_add_cost
     global count
@@ -114,20 +109,22 @@ def add_bill_func():
     bill_desc = bill.get()
     bill_add_cost = float(add_cost.get())
     
-    db[count] = (bill_desc, bill_add_cost)
-    count+=1
-    t = t+bill_add_cost
+    # checks if either fields are empty, does not store values if one or the other is empty
+    if bill_desc != '' and bill_add_cost != '':
+        db[count] = [bill_desc, bill_add_cost]
+        count+=1
+        t = t+bill_add_cost
+        
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
 
     if bill_desc == '' or bill_add_cost == '':
-        messagebox.showwarning('Warning', "Can't leave field blank")
+        bill.delete(0, END)
+        add_cost.delete(0, END)
     elif isinstance(bill_add_cost, float) == False:
-        messagebox.showwarning('Warning', "Cannot use letters in Monthly Cost field")
         bill.delete(0, END)
         add_cost.delete(0, END)
     elif isinstance(bill_desc, str) == False:
         b = 1
-        messagebox.showwarning('Warning', "Cannot use numbers in Bill Name field")
         bill.delete(0, END)
         add_cost.delete(0, END)
     else:
@@ -135,24 +132,9 @@ def add_bill_func():
         # if b == 1, warning is triggered above. if b == 0 if warning is not triggered, continue with program
         if b == 0:
             tree.insert(parent='',index=0, text=f'{bill_desc}',values=(bill_desc, format(f"{bill_add_cost:.2f}")))
-            
-            # lbox.insert(0, [bill_desc, bill_add_cost])
-            # Entry.delete() must be put before database conn.commit() and conn.close() to work
-
             bill.delete(0, END)
             add_cost.delete(0, END)
-            # add bill_name and cost to sqlite db
-            # c.execute("INSERT INTO bills VALUES (:bill_desc, :bill_add_cost)",
-            #         {
-            #             'bill_desc': bill_desc,
-            #             'bill_add_cost': bill_add_cost
-            #         }
-            # )
-            # c.execute(""" SELECT oid, * FROM bills""")
-            # conn.commit()
-            # conn.close()
-            # clear field after pressing add bill button
-
+            
 def delete_bill_func():
     '''
         Delete function attached to delete_btn. Deletes selected item from treeview.
@@ -172,42 +154,9 @@ def delete_bill_func():
     # update label
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
     
-    # conn = sqlite3.connect('bill_tracker.db')
-    # c = conn.cursor()
-    # c.execute("DELETE FROM bills WHERE bill_name = ?", (selected,))
-    # conn.commit()
-    # conn.close()
-
-# def table_exists():
-#     '''
-#         Checks if table exists, if not it creates table 'bills' in bill_tracker.db
-#     '''
-#     conn = sqlite3.connect('bill_tracker.db')
-#     c = conn.cursor()
-
-#     # create table with data types, sqlite automatically sets primary key
-#     # in sqlite3, all tables are enlisted in the ** sqlite_master table **
-#     table_exists = c.execute("""SELECT count(name) FROM sqlite_master WHERE type='table' AND name='bills'; """).fetchall()
-
-#     # check to see if table exists, creates bills table if not
-#     if table_exists == []:
-#         c.execute("""CREATE TABLE bills (
-#         bill_name text,
-#         cost integer
-#         )""")
-#     else:
-#         pass
-#     c.execute("""SELECT * FROM sqlite_master WHERE type='table' AND name='bills'; """)
-#     conn.commit()
-#     conn.close()
-
 def clear_all():
     for i in tree.get_children():
         tree.delete(i)
-        # item = tree.item(i)
-        # record = item['values']
-        # t = t - float(record[1])
-        # print(f"Deleted bill: {record[0]} - ${record[1]}")
     for i in list(db.keys()):
         db.pop(i)
 
@@ -228,20 +177,19 @@ def tree_view():
     style.configure("Treeview",background='#3b403b', fieldbackground='#3b403b', fg='#ffffff')
     style.map('Treeview', background=[('selected', '#303330')])
 
-
-
 def disable_btn():
     '''
-        Tool to disable features
+        Function to disable features for testing
     '''
     file_menu.entryconfig("Open File", state="disabled")
 
 '''
-    Code below generates GUI
+    Generate GUI
 '''
 # put tree function here
 tree_view()
 
+# initialize open file and save file buttons within menu
 m = Menu(root)
 root.config(menu=m)
 file_menu = Menu(m, tearoff=False)
@@ -249,26 +197,29 @@ m.add_cascade(label="File", menu=file_menu)
 file_menu.add_command(label="Open File", command=open_file)
 file_menu.add_command(label="Save File As", command=save_file)
 
-
+# define fonts for use in GUI
 my_font = Font(family='Noto Sans', size=11, weight='bold')
 label_font = Font(family='Noto Sans', size=10, weight='bold')
 
-
+# displays current total cost below treeview
 total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}', bg='#303330', font = label_font, fg='#ffffff')
 total_label.place(relx=.75,rely=.89)
 
+# label and entry field for bill name
 bill_label = Label(root, text="BILL NAME", bg='#303330', font = label_font, fg='#ffffff')
 bill_label.place(relx=.020, rely=.10)
 bill = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
 bill.place(relx=.02, rely=.17,height=28)
 bill.configure(bg='#484f48')
 
+# label and entry field for monthly cost
 add_cost_label = Label(root, text="MONTHLY COST", bg='#303330', font = label_font, fg='#ffffff')
 add_cost_label.place(relx=.02, rely=.27)
 add_cost = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
 add_cost.place(relx=.02, rely=.34,height=28)
 add_cost.configure(bg='#484f48')
 
+# version label
 vlabel = Label(root, text="v1.7", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
 vlabel.place(relx=.01,rely=.94)
 
@@ -283,11 +234,6 @@ delete_btn.place(relx=.015,rely=.62)
 # add clear all button
 clear_btn = Button(root, padx=35, pady=6, text=' CLEAR ', font=my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=clear_all)
 clear_btn.place(relx=.015,rely=.77)
-
-# connect to db, creates bill_tracker.db if it doesn't exist
-# table_exists()
-
-# print(font.families())
 
 root.resizable(width=False, height=False)
 root.mainloop()

@@ -14,13 +14,13 @@ import datetime
         - create separate module file for functions, then import them to bill_tracker.py
         - add scroll bar
         - fix column heading name output to excel sheet + include total
-        - bug: saving excel file, re-opening it and then re-saving it outputs a blank sheet.
         - total_label should read in from db or treeview
         - add try/except for line 181, add_bill_func and delete_bill_func
     Fixed:
         - Open file now loads .xlsx file (assuming correct format) into the appropriate columns
         - Save file now outputs to xlsx list in proper format
         - clear_all() function now resets display_total properly (previously kept display_total value even after clearing values from treeview)
+        - bug: saving excel file, re-opening it and then re-saving it outputs a blank sheet. *Fix: db was not populating with file content; added db insertions in open file function
 '''
 db = {}
 item_costs = []
@@ -49,8 +49,6 @@ root.configure(bg='#303330')
 def open_file():
     '''
         Reads and inputs .xslx file contents into the program's treeview in appropriate columns.
-
-        **Does not insert values from excel sheet into db, only treeview. Needs to insert data into db for it to be tracked
     '''
     global db
     global bill_desc
@@ -82,6 +80,7 @@ def open_file():
         db[row[0]] = row[1]
         tree.insert("", "end", values=row)
         rf.dropna(how='all',axis='columns',inplace=True)
+        
     # reset tree_view to display opened file contents
     tree_view()
 

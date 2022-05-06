@@ -17,15 +17,15 @@ import datetime
         - hot keys: use DEL key to delete directly from tree view.
                     Add (alt + A), Delete (alt + D), Clear (alt + C) hot keys
 
-    Current fixes:
-        - File menu 'open' function
-        - Output total to xlsx list
+    Fixed:
+        - Open file now loads .xlsx file (assuming correct format) into the appropriate columns
+        - Save file now outputs to xlsx list in proper format
+        - clear_all() function now resets display_total properly (previously kept display_total value even after clearing values from treeview)
 '''
 db = {}
 item_costs = []
 count = 0
-t = 0.0
-error_msg = ""
+display_total = 0.0
 
 # instantiate tkinter window and theme
 root = ThemedTk()
@@ -33,6 +33,9 @@ tree = ttk.Treeview(root, show='headings')
 frame = ttk.Frame(root, width=20, height=20)
 style = ttk.Style()
 style.theme_use('equilux')
+
+# must initialize after root object has been created
+error_msg = StringVar()
 
 # convert .png image into a .ico image for icon use
 ico = Image.open('logo.png')
@@ -43,8 +46,6 @@ root.title("Handy Bill Handler")
 root.geometry('500x350')
 root.configure(bg='#303330')
 
-var = StringVar()
-
 def open_file():
     '''
         Reads and inputs .xslx file contents into the program's treeview in appropriate columns.
@@ -52,9 +53,11 @@ def open_file():
     global db
     global bill_desc
     global bill_add_cost
+    clear_error()
 
     file = fd.askopenfilename(title='Select A File')
     clear_all()
+    # usecols parameter defines which columns are targeted; inclusive
     rf = pd.read_excel(file, usecols= "B:C")
 
     # drops null value columns (null = 'NaN' values)
@@ -77,6 +80,7 @@ def open_file():
         tree.insert("", "end", values=row)
         rf.dropna(how='all',axis='columns',inplace=True)
     
+    # reset tree_view to display opened file contents
     tree_view()
 
 def save_file():
@@ -85,6 +89,7 @@ def save_file():
     '''
     f = fd.asksaveasfilename()
     df = pd.DataFrame.from_dict(db,orient='index')
+    clear_error()
 
     # output validation so that file extension isn't added every file save (when replacing file)
     if '.xlsx' in f:
@@ -103,48 +108,57 @@ def add_bill_func():
     global bill_desc
     global bill_add_cost
     global count
-    global t
+    global display_total
     global db
-    b = 0
-    
-    bill_desc = bill.get()
-    bill_add_cost = float(add_cost.get())
-    
+    global error_msg
+        
     # checks if either fields are empty, does not store values if one or the other is empty
-    if bill_desc != '' and bill_add_cost != '':
-        db[count] = [bill_desc, bill_add_cost]
-        count+=1
-        t = t+bill_add_cost
-
-    # add input validation for error messages here
-
-    total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
-
-    if bill_desc == '' or bill_add_cost == '':
+    # if bill_desc != '' and bill_add_cost != '':
+    bill_desc = bill.get()
+    bill_add_cost = add_cost.get()
+    
+    # check needed to avoid float value error
+    if bill_desc == '' and bill_add_cost == '':
+        error_msg = "Oops.. both fields must be filled"
+        error_label.configure(text=error_msg)
+        return
+    # if entry field is not empty, converts bill_add_cost to float to be added or subtracted from display_total
+    else:
+        bill_desc = bill.get()
+        bill_add_cost = float(add_cost.get())
+        error_msg = 'Enter values into the field(s)'
         bill.delete(0, END)
         add_cost.delete(0, END)
-    elif isinstance(bill_add_cost, float) == False:
+    
+    # check types for each entry field
+    if isinstance(bill_add_cost, float) == False:
+        error_msg = f'Error: Only numbers allowed in Monthly Cost entry field.'
         bill.delete(0, END)
         add_cost.delete(0, END)
-    elif isinstance(bill_desc, str) == False:
-        b = 1
+    if isinstance(bill_desc, str) == False:
+        error_msg = f'Error: Only letters allowed in Bill Name entry field.'
         bill.delete(0, END)
         add_cost.delete(0, END)
     else:
         # inserts values directly from entry fields bill and add_cost, not from db
-        # if b == 1, warning is triggered above. if b == 0 if warning is not triggered, continue with program
-        if b == 0:
-            tree.insert(parent='',index=0, text=f'{bill_desc}',values=(bill_desc, format(f"{bill_add_cost:.2f}")))
-            bill.delete(0, END)
-            add_cost.delete(0, END)
+        clear_error()
+        db[count] = [bill_desc, bill_add_cost]
+        count+=1
+        display_total = display_total+bill_add_cost
+        print(db)
+        total_label.config(text=f'Total: ${format(f"{display_total:.2f}")}')
+        tree.insert(parent='',index=0, text=f'{bill_desc}',values=(bill_desc, format(f"{bill_add_cost:.2f}")))
+        bill.delete(0, END)
+        add_cost.delete(0, END)
     return [bill_desc, bill_add_cost]
             
 def delete_bill_func():
     '''
         Delete function attached to delete_btn. Deletes selected item from treeview.
     '''
-    global t
+    global display_total
     global db
+    clear_error()
 
     selected = tree.selection()
     item = tree.item(selected)
@@ -152,31 +166,30 @@ def delete_bill_func():
     for k, v in list(db.items()):
         if record[0] in v:
             del db[k]
-
-    t = t - float(record[1])
+    
+    print(float(record[1]))
+    display_total = display_total - float(record[1])
     tree.delete(selected)
+    
     # update label
-    total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
-
-def error(bill_desc, bill_add_cost):
-    global error_msg
-
-    if bill_desc != '' or bill_add_cost != '':
-        if bill_desc.isdigit() == True:
-            error_msg = f'Error: Only letters allowed in Bill Name entry field.'
-        elif bill_add_cost.isalpha() == True:
-            error_msg = f'Error: Only numbers allowed in Monthly Cost entry field.'
-        else:
-            return
+    total_label.config(text=f'Total: ${format(f"{display_total:.2f}")}')
     
 def clear_all():
+    global display_total
+    clear_error()
+
+    # for every item in the treeview, remove from db as well
     for i in tree.get_children():
         tree.delete(i)
     for i in list(db.keys()):
         db.pop(i)
 
-    # line below connects to db directly, and shows the databases' values are cleared
-    total_label.config(text=f'Total: ${format(f"{sum(list(db)):.2f}")}')
+    # must reset display_total from add_bill_func
+    display_total = 0
+
+    # show the dictionary's values are cleared. convert to list and sum list which should be 0
+    db_val = list(db.values())
+    total_label.config(text=f'Total: ${format(f"{sum(db_val):.2f}")}')
 
 def tree_view():
     '''
@@ -192,20 +205,27 @@ def tree_view():
     style.configure("Treeview",background='#3b403b', fieldbackground='#3b403b', fg='#ffffff')
     style.map('Treeview', background=[('selected', '#303330')])
 
+def clear_error():
+    '''
+        Clears any error messages upon call. 
+    '''
+    error_msg = ''
+    error_label.configure(text=error_msg)
+    return
+
 def disable_btn():
     '''
-        Function to disable features for testing
+        Function to disable buttons for testing
     '''
     file_menu.entryconfig("Open File", state="disabled")
 
 '''
     Generate GUI
 '''
-# put tree function here
+# initialize treeview in GUI
 tree_view()
 
-
-# initialize open file and save file buttons within menu
+# initialize open file and save file buttons within menu object
 m = Menu(root)
 root.config(menu=m)
 file_menu = Menu(m, tearoff=False)
@@ -218,7 +238,7 @@ my_font = Font(family='Noto Sans', size=11, weight='bold')
 label_font = Font(family='Noto Sans', size=10, weight='bold')
 
 # displays current total cost below treeview
-total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}', bg='#303330', font=label_font, fg='#ffffff')
+total_label = Label(root, text=f'Total: ${format(f"{display_total:.2f}")}', bg='#303330', font=label_font, fg='#ffffff')
 total_label.place(relx=.75,rely=.89)
 
 # label and entry field for bill name
@@ -235,26 +255,23 @@ add_cost = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9)
 add_cost.place(relx=.02, rely=.34,height=28)
 add_cost.configure(bg='#484f48')
 
-# grab return values from add_bill_func, bill_desc and bill_add_cost
-bill_result = add_bill_func
-
-error(bill_result[0], bill_result[1])
-error_label = Label(root, text=f'{error_msg}', bg='#303330', font=Font(family='Noto Sans', size=9), fg='#ffffff')
+# error_label displays errors after checking input validation above treeview
+error_label = Label(root, bg='#303330', font=Font(family='Noto Sans', size=9), fg='#ffffff')
 error_label.place(relx=.32,rely=.12)
 
-# version label
-vlabel = Label(root, text="v1.7", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
+# version label, displays version - a version for each fix/git push
+vlabel = Label(root, text="v2.1", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
 vlabel.place(relx=.01,rely=.94)
 
-# add add button
+# add button
 add_btn = Button(root, padx=36, pady=6, text='   ADD  ', font = my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=add_bill_func)
 add_btn.place(relx=.015,rely=.47)
 
-# add delete button
+# delete button
 delete_btn = Button(root, padx=36, pady=6, text='DELETE', font=my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=delete_bill_func)
 delete_btn.place(relx=.015,rely=.62)
 
-# add clear all button
+# clear all button
 clear_btn = Button(root, padx=35, pady=6, text=' CLEAR ', font=my_font, bd=0, bg='#3b403b',fg='#ffffff',activeforeground='#080808', activebackground='#424d42', command=clear_all)
 clear_btn.place(relx=.015,rely=.77)
 

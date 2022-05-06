@@ -7,6 +7,7 @@ from ttkthemes import ThemedTk
 from PIL import ImageTk, Image
 import pandas as pd
 import numpy
+import time
 import datetime
 
 '''
@@ -24,7 +25,7 @@ db = {}
 item_costs = []
 count = 0
 t = 0.0
-
+error_msg = ""
 
 # instantiate tkinter window and theme
 root = ThemedTk()
@@ -48,10 +49,10 @@ def open_file():
     '''
         Reads and inputs .xslx file contents into the program's treeview in appropriate columns.
     '''
-
     global db
     global bill_desc
     global bill_add_cost
+
     file = fd.askopenfilename(title='Select A File')
     clear_all()
     rf = pd.read_excel(file, usecols= "B:C")
@@ -114,7 +115,9 @@ def add_bill_func():
         db[count] = [bill_desc, bill_add_cost]
         count+=1
         t = t+bill_add_cost
-        
+
+    # add input validation for error messages here
+
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
 
     if bill_desc == '' or bill_add_cost == '':
@@ -134,6 +137,7 @@ def add_bill_func():
             tree.insert(parent='',index=0, text=f'{bill_desc}',values=(bill_desc, format(f"{bill_add_cost:.2f}")))
             bill.delete(0, END)
             add_cost.delete(0, END)
+    return [bill_desc, bill_add_cost]
             
 def delete_bill_func():
     '''
@@ -153,6 +157,17 @@ def delete_bill_func():
     tree.delete(selected)
     # update label
     total_label.config(text=f'Total: ${format(f"{t:.2f}")}')
+
+def error(bill_desc, bill_add_cost):
+    global error_msg
+
+    if bill_desc != '' or bill_add_cost != '':
+        if bill_desc.isdigit() == True:
+            error_msg = f'Error: Only letters allowed in Bill Name entry field.'
+        elif bill_add_cost.isalpha() == True:
+            error_msg = f'Error: Only numbers allowed in Monthly Cost entry field.'
+        else:
+            return
     
 def clear_all():
     for i in tree.get_children():
@@ -189,6 +204,7 @@ def disable_btn():
 # put tree function here
 tree_view()
 
+
 # initialize open file and save file buttons within menu
 m = Menu(root)
 root.config(menu=m)
@@ -202,7 +218,7 @@ my_font = Font(family='Noto Sans', size=11, weight='bold')
 label_font = Font(family='Noto Sans', size=10, weight='bold')
 
 # displays current total cost below treeview
-total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}', bg='#303330', font = label_font, fg='#ffffff')
+total_label = Label(root, text=f'Total: ${format(f"{t:.2f}")}', bg='#303330', font=label_font, fg='#ffffff')
 total_label.place(relx=.75,rely=.89)
 
 # label and entry field for bill name
@@ -218,6 +234,13 @@ add_cost_label.place(relx=.02, rely=.27)
 add_cost = Entry(root, bd=0, fg='#ffffff', font=Font(family='Noto Sans', size=9), width=18)
 add_cost.place(relx=.02, rely=.34,height=28)
 add_cost.configure(bg='#484f48')
+
+# grab return values from add_bill_func, bill_desc and bill_add_cost
+bill_result = add_bill_func
+
+error(bill_result[0], bill_result[1])
+error_label = Label(root, text=f'{error_msg}', bg='#303330', font=Font(family='Noto Sans', size=9), fg='#ffffff')
+error_label.place(relx=.32,rely=.12)
 
 # version label
 vlabel = Label(root, text="v1.7", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')

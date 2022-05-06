@@ -15,7 +15,9 @@ import datetime
         - add scroll bar
         - fix column heading name output to excel sheet + include total
         - total_label should read in from db or treeview
-        - add try/except for line 181, add_bill_func and delete_bill_func
+        - add try/except for line 181, delete_bill_func, and add_bill_func
+        - annual total? bi-weekly total?
+        - hot key binds?
     Fixed:
         - Open file now loads .xlsx file (assuming correct format) into the appropriate columns
         - Save file now outputs to xlsx list in proper format
@@ -23,9 +25,9 @@ import datetime
         - bug: saving excel file, re-opening it and then re-saving it outputs a blank sheet. *Fix: db was not populating with file content; added db insertions in open file function
 '''
 db = {}
-item_costs = []
 count = 0
 display_total = 0.0
+version = "v2.3"
 
 # instantiate tkinter window and theme
 root = ThemedTk()
@@ -80,7 +82,7 @@ def open_file():
         db[row[0]] = row[1]
         tree.insert("", "end", values=row)
         rf.dropna(how='all',axis='columns',inplace=True)
-        
+
     # reset tree_view to display opened file contents
     tree_view()
 
@@ -169,6 +171,10 @@ def delete_bill_func():
     selected = tree.selection()
     item = tree.item(selected)
     record = item['values']
+    
+    # if nothing is selected in treeview, stop function. prevents IndexError on line 185 when it continues
+    if record == '':
+        return
 
     # delete selected item from db -> {k: [bill name, cost], ...}
     for k, v in list(db.items()):
@@ -268,8 +274,8 @@ add_cost.configure(bg='#484f48')
 error_label = Label(root, bg='#303330', font=Font(family='Noto Sans', size=9), fg='#ffffff')
 error_label.place(relx=.32,rely=.12)
 
-# version label, displays version: .1 for each fix/git push
-vlabel = Label(root, text="v2.1", font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
+# version label, displays version for each fix/git push
+vlabel = Label(root, text=version, font=Font(family='Noto Sans', size=7), bg='#303330', fg='#ffffff')
 vlabel.place(relx=.01,rely=.94)
 
 # add button
